@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 app.use("/api/user", userRoute);
 app.use("/api/match", matchRoute);
 app.use(tokenMiddleware.verify);
-
+app.get("/",(req,res)=>{ res.send("hello")})
 mongoose.connect(process.env.CONNECTION_STRING);
 
 const generateRoomId = (userId, otherUserId) => {
