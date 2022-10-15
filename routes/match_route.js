@@ -6,7 +6,7 @@ const User = require("../model/user");
 
 router.get("/next", async (req, res) => {
   const userId = req.query.userId;
-  console.log(userId);
+
   const user = await User.findById(userId);
 
   let excludeIdList = [userId];
@@ -15,23 +15,19 @@ router.get("/next", async (req, res) => {
     excludeIdList = [...excludeIdList, ...user.acceptedUsers];
   }
 
-  console.log(`rejectedUser : ${user.rejectUsers}`);
-
   if (user.rejectUsers != null) {
     excludeIdList = [...excludeIdList, ...user.rejectUsers];
   }
-  console.log(`excludeIdList : ${excludeIdList}`);
   const candidate = await User.findById({ $nin: excludeIdList });
 
   if (candidate == null) {
     return res.status(404).json({ message: "You consumed all people nearby" });
   }
-  console.log(`user: ${user.username} : ${user.id}`);
-  console.log(`candidate: ${candidate.username} : ${candidate.id}`);
+
   res.json(candidate);
 });
 
-router.post("/answer", async (req, res) => {
+router.post("/", async (req, res) => {
   const userId = req.body.userId;
   const targetUserId = req.body.targetUserId;
   const isAccepted = req.body.isAccepted;
@@ -41,33 +37,59 @@ router.post("/answer", async (req, res) => {
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
-
-  if (isAccepted == undefined) {
-    res.status(400).json({ message: "isAccepted is required" });
-  }
-
   let modifiedUser;
-  if (isAccepted) {
-    const list = user.acceptedUsers;
-    if (list.includes(targetUserId)) {
-      return res.status(400).json({ message: "Already accepted" });
-    }
-    list.push(targetUserId);
-    modifiedUser = await User.updateOne(
-      { _id: userId },
-      { acceptedUsers: list }
-    );
-  } else {
-    const list = user.rejectUsers;
-    if (list.includes(targetUserId)) {
-      return res.status(400).json({ message: "Already rejected" });
-    }
+  if (isAccepted != undefined && targetUserId != undefined) {
+    if (isAccepted) {
+      const list = user.acceptedUsers;
+      if (list.includes(targetUserId)) {
+        return res.status(400).json({ message: "Already accepted" });
+      }
+      list.push(targetUserId);
+      modifiedUser = await User.updateOne(
+        { _id: userId },
+        { acceptedUsers: list }
+      );
+    } else {
+      const list = user.rejectUsers;
+      if (list.includes(targetUserId)) {
+        return res.status(400).json({ message: "Already rejected" });
+      }
 
-    list.push(targetUserId);
-    modifiedUser = await User.updateOne({ _id: userId }, { rejectUsers: list });
+      list.push(targetUserId);
+      modifiedUser = await User.updateOne(
+        { _id: userId },
+        { rejectUsers: list }
+      );
+    }
   }
 
-  res.json(modifiedUser);
+  let excludeIdList = [userId];
+
+  if (user.acceptedUsers != null) {
+    excludeIdList = [...excludeIdList, ...user.acceptedUsers];
+  }
+
+  if (user.rejectUsers != null) {
+    excludeIdList = [...excludeIdList, ...user.rejectUsers];
+  }
+  const candidate = await User.findById({ $nin: excludeIdList });
+
+  if (candidate == null) {
+    return res.status(404).json({ message: "You consumed all people nearby" });
+  }
+
+  // TODO: age calculation
+
+  var now = new Date();
+  var diff = now - candidate.birthday;
+
+  candidate.birthday.res.json({
+    id: candidate.id,
+    username: candidate.username,
+    firstName: candidate.firstName,
+    lastName: candidate.lastName,
+    age: 20,
+  });
 });
 
 module.exports = router;

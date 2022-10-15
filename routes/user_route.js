@@ -10,17 +10,40 @@ router.post("/register", async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  const existingUser = await User.findOne({ username: username });
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const mail = req.body.mail;
+
+  let existingUser = await User.findOne({
+    username: username,
+  });
 
   if (existingUser) {
     return res.status(404).json({
-      message: "Kullanıcı adı kullanılıyor",
+      message: "Kullanıcı adi kullanılıyor",
+    });
+  }
+
+  existingUser = await User.findOne({
+    mail: mail,
+  });
+
+  if (existingUser) {
+    return res.status(404).json({
+      message: "Mail adresi kullanılıyor",
     });
   }
 
   const user = new User({
     username: username,
     password: password,
+    firstName: firstName,
+    lastName: lastName,
+    mail: mail,
+    acceptedUsers: [],
+    blockedUsers: [],
+    rejectUsers: [],
+    removedUsers: [],
   });
 
   const document = await user.save();
@@ -30,7 +53,13 @@ router.post("/register", async (req, res) => {
   });
 
   res.json({
-    username: document.username,
+    user: {
+      id: potentialUser.id,
+      firstName: document.firstName,
+      lastName: document.lastName,
+      mail: document.mail,
+      username: document.username,
+    },
     token: token,
   });
 });
@@ -58,7 +87,13 @@ router.post("/login", async (req, res) => {
   });
 
   res.json({
-    username: potentialUser.username,
+    user: {
+      id: potentialUser.id,
+      firstName: potentialUser.firstName,
+      lastName: potentialUser.lastName,
+      mail: potentialUser.mail,
+      username: potentialUser.username,
+    },
     token: token,
   });
 });
