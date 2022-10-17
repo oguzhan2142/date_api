@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const express = require("express");
 const app = express();
 const http = require("http");
+const path = require("path");
 
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -17,21 +18,24 @@ const Message = require("./model/message");
 
 require("dotenv").config();
 app.use(bodyParser.json());
-app.set('json spaces', 40);
+app.set("json spaces", 40);
+app.use(express.static("public"));
 
+app.use((req, res, next) => {
+  res.setHeader("Content-Type", "application/json");
 
-app.use((req,res,next)=>{
-	
-    res.setHeader('Content-Type', 'application/json');
+  next();
+});
 
-	
-	next()
+app.get("/", function (req, res) {
+  res.sendFile(path.join(__dirname, "/public/index.html"));
+});
 
-})
-app.get("/",(req,res)=>{ res.send("seni seviyorum bitanem <3")})
-app.post("/",(req,res)=>{ res.json(req.body)})
+app.post("/", (req, res) => {
+  res.json(req.body);
+});
 const port = process.env.PORT;
-console.log(port)
+console.log(port);
 
 app.use("/api/user", userRoute);
 app.use("/api/match", matchRoute);
@@ -80,10 +84,10 @@ io.on("connection", async (socket) => {
 
     message.save();
   });
-}); 
+});
 app.get("*", (req, res) => {
-    res.send("not found")
-})
+  res.send("not found");
+});
 
 server.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
