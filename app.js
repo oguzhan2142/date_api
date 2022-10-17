@@ -12,6 +12,7 @@ const io = new Server(server);
 const tokenMiddleware = require("./middleware/token_middleware");
 const userRoute = require("./routes/user_route");
 const matchRoute = require("./routes/match_route");
+const chatRoute = require("./routes/chat_route");
 
 const Room = require("./model/room");
 const Message = require("./model/message");
@@ -36,9 +37,15 @@ app.post("/", (req, res) => {
 });
 const port = process.env.PORT;
 console.log(port);
-
+mongoose.set("toJSON", {
+  virtuals: true,
+  transform: (doc, converted) => {
+    delete converted._id;
+  },
+});
 app.use("/api/user", userRoute);
 app.use("/api/match", matchRoute);
+app.use("/api/chat", chatRoute);
 app.use(tokenMiddleware.verify);
 
 mongoose.connect(process.env.CONNECTION_STRING);
@@ -61,6 +68,8 @@ io.on("connection", async (socket) => {
     const newRoom = new Room({
       roomId: roomId,
       createdAt: new Date(),
+      users: [userId, otherUserId],
+      messages: [],
     });
 
     room = await newRoom.save();
@@ -72,17 +81,23 @@ io.on("connection", async (socket) => {
     console.log("user disconnected");
   });
 
-  socket.on("message", (msg) => {
+  socket.on("message", async (msg) => {
     socket.to(roomId).emit("message", msg);
     const message = new Message({
       userId: userId,
       content: msg,
-      roomReference: room.id,
-
       createdAt: new Date(),
     });
 
-    message.save();
+    console.log(room.id);
+    // Room.updateOne({ _id: room.id }, { $push: { messages: message } }).catch(
+    //   (err) => {
+    //     console.log(err);
+    //   }
+    // );
+    await room.updateOne({
+      $push: { messages: [message] },
+    });
   });
 });
 app.get("*", (req, res) => {

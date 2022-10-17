@@ -8,7 +8,7 @@ router.get("/next", async (req, res) => {
   const userId = req.query.userId;
 
   const user = await User.findById(userId);
-	if(user == null) return res.status(404).json({message:"user not found"})
+  if (user == null) return res.status(404).json({ message: "user not found" });
   let excludeIdList = [userId];
 
   if (user.acceptedUsers != null) {
@@ -83,7 +83,7 @@ router.post("/", async (req, res) => {
   var now = new Date();
   var diff = now - candidate.birthday;
 
-  candidate.birthday.res.json({
+  res.json({
     id: candidate.id,
     username: candidate.username,
     firstName: candidate.firstName,
