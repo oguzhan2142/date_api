@@ -5,8 +5,16 @@ const jwt = require("jsonwebtoken");
 const User = require("../model/user");
 
 const expireIn = "2h";
-
-router.post("/register", async (req, res) => {
+router.get("/test",async(req,res)=>{
+	let user = await User.find()
+	res.send(user)
+})
+router.post("/test",(req,res)=>{
+	res.status(400);
+		
+	res.json(req.body)
+})
+router.post("/signup", async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
@@ -40,6 +48,7 @@ router.post("/register", async (req, res) => {
     firstName: firstName,
     lastName: lastName,
     mail: mail,
+	birthday: new Date(),
     acceptedUsers: [],
     blockedUsers: [],
     rejectUsers: [],
@@ -48,13 +57,15 @@ router.post("/register", async (req, res) => {
 
   const document = await user.save();
   console.log(document.id);
+  
+
   const token = jwt.sign(user.toJSON(), process.env.SECRET_KEY, {
     expiresIn: expireIn,
   });
 
   res.json({
     user: {
-      id: potentialUser.id,
+      id: document.id,
       firstName: document.firstName,
       lastName: document.lastName,
       mail: document.mail,

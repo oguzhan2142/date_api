@@ -16,14 +16,27 @@ const Room = require("./model/room");
 const Message = require("./model/message");
 
 require("dotenv").config();
-
-const port = process.env.PORT;
-
 app.use(bodyParser.json());
+app.set('json spaces', 40);
+
+
+app.use((req,res,next)=>{
+	
+    res.setHeader('Content-Type', 'application/json');
+
+	
+	next()
+
+})
+app.get("/",(req,res)=>{ res.send("seni seviyorum bitanem <3")})
+app.post("/",(req,res)=>{ res.json(req.body)})
+const port = process.env.PORT;
+console.log(port)
+
 app.use("/api/user", userRoute);
 app.use("/api/match", matchRoute);
 app.use(tokenMiddleware.verify);
-app.get("/",(req,res)=>{ res.send("hello")})
+
 mongoose.connect(process.env.CONNECTION_STRING);
 
 const generateRoomId = (userId, otherUserId) => {
@@ -67,7 +80,10 @@ io.on("connection", async (socket) => {
 
     message.save();
   });
-});
+}); 
+app.get("*", (req, res) => {
+    res.send("not found")
+})
 
 server.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
