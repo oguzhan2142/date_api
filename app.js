@@ -22,7 +22,7 @@ require("dotenv").config();
 app.use(bodyParser.json());
 // app.use(bodyParser.urlencoded({ extended: true }));
 
-app.set("json spaces", 40);
+app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(express.static("public"));
 
 app.use((req, res, next) => {
@@ -39,7 +39,7 @@ app.post("/", (req, res) => {
   res.json(req.body);
 });
 const port = process.env.PORT;
-console.log(port);
+
 mongoose.set("toJSON", {
   virtuals: true,
   transform: (doc, converted) => {

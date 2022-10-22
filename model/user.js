@@ -37,15 +37,23 @@ const UserSchema = new Schema(
     },
     rejectUsers: {
       type: [mongoose.Types.ObjectId],
+      ref: "User",
     },
     blockedUsers: {
       type: [mongoose.Types.ObjectId],
+      ref: "User",
     },
     acceptedUsers: {
       type: [mongoose.Types.ObjectId],
+      ref: "User",
+    },
+    matches: {
+      type: [mongoose.Types.ObjectId],
+      ref: "User",
     },
     removedUsers: {
       type: [mongoose.Types.ObjectId],
+      ref: "User",
     },
   },
   { versionKey: false }

@@ -1,6 +1,8 @@
 const express = require("express");
 
 const User = require("../model/user");
+
+const imageStorage = require("../storage/image_storage");
 var fs = require("fs");
 var path = require("path");
 var multer = require("multer");
@@ -28,13 +30,7 @@ router.post("/order", async (req, res) => {
   const existImages = [];
   for (let i = 0; i < images.length; i++) {
     const element = images[i];
-    const dirPath = path.join(
-      process.cwd(),
-      `/uploads/${userId}/`,
-      `${element.key}.png`
-    );
-
-    console.log(dirPath);
+    const dirPath = imageStorage.getPathOfImage(element.key, userId);
 
     if (fs.existsSync(dirPath)) {
       existImages.push(element);

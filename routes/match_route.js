@@ -1,8 +1,11 @@
 const express = require("express");
 
 const router = express.Router();
-
+const path = require("path");
 const User = require("../model/user");
+
+const imageStorage = require("../storage/image_storage");
+const strConst = require("../constants/string_const");
 
 router.post("/", async (req, res) => {
   const userId = req.body.userId;
@@ -50,7 +53,9 @@ router.post("/", async (req, res) => {
   if (user.rejectUsers != null) {
     excludeIdList = [...excludeIdList, ...user.rejectUsers];
   }
-  const candidates = await User.find({ $nin: excludeIdList }).limit(count ?? 1);
+  const candidates = await User.find({ _id: { $nin: excludeIdList } }).limit(
+    count ?? 1
+  );
 
   if (candidates == null) {
     return res.status(404).json({ message: "You consumed all people nearby" });
@@ -59,6 +64,7 @@ router.post("/", async (req, res) => {
   // TODO: age calculation
   var now = new Date();
   var diff = now - candidates.birthday;
+
   const models = candidates.map((v) => {
     return {
       id: v.id,
@@ -66,10 +72,32 @@ router.post("/", async (req, res) => {
       firstName: v.firstName,
       lastName: v.lastName,
       age: 20,
+      images: v.images.map((k) => {
+        return {
+          id: k.id,
+          url: imageStorage.getPathOfImage(k.key, v.id),
+        };
+      }),
     };
   });
 
   res.json(models);
 });
 
+router.get("/matches", async (req, res) => {
+  const userId = req.query.userId;
+
+  const user = await User.findById({ _id: userId })
+    .select("matches")
+    .populate("matches", ["firstName", "lastName", "images"]);
+
+  const matches = user.matches.map((v) => {
+    return {
+      firstName: v.firstName,
+      lastName: v.lastName,
+      image: imageStorage.getPathOfImageAsUrl(v.images[0]?.key, v.id),
+    };
+  });
+  res.json(matches);
+});
 module.exports = router;
