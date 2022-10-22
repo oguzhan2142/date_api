@@ -4,33 +4,11 @@ const router = express.Router();
 
 const User = require("../model/user");
 
-router.get("/next", async (req, res) => {
-  const userId = req.query.userId;
-
-  const user = await User.findById(userId);
-  if (user == null) return res.status(404).json({ message: "user not found" });
-  let excludeIdList = [userId];
-
-  if (user.acceptedUsers != null) {
-    excludeIdList = [...excludeIdList, ...user.acceptedUsers];
-  }
-
-  if (user.rejectUsers != null) {
-    excludeIdList = [...excludeIdList, ...user.rejectUsers];
-  }
-  const candidate = await User.findById({ $nin: excludeIdList });
-
-  if (candidate == null) {
-    return res.status(404).json({ message: "You consumed all people nearby" });
-  }
-
-  res.json(candidate);
-});
-
 router.post("/", async (req, res) => {
   const userId = req.body.userId;
   const targetUserId = req.body.targetUserId;
   const isAccepted = req.body.isAccepted;
+  const count = req.body.count;
 
   const user = await User.findById({ _id: userId });
 
@@ -72,24 +50,26 @@ router.post("/", async (req, res) => {
   if (user.rejectUsers != null) {
     excludeIdList = [...excludeIdList, ...user.rejectUsers];
   }
-  const candidate = await User.findById({ $nin: excludeIdList });
+  const candidates = await User.find({ $nin: excludeIdList }).limit(count ?? 1);
 
-  if (candidate == null) {
+  if (candidates == null) {
     return res.status(404).json({ message: "You consumed all people nearby" });
   }
 
   // TODO: age calculation
-
   var now = new Date();
-  var diff = now - candidate.birthday;
-
-  res.json({
-    id: candidate.id,
-    username: candidate.username,
-    firstName: candidate.firstName,
-    lastName: candidate.lastName,
-    age: 20,
+  var diff = now - candidates.birthday;
+  const models = candidates.map((v) => {
+    return {
+      id: v.id,
+      username: v.username,
+      firstName: v.firstName,
+      lastName: v.lastName,
+      age: 20,
+    };
   });
+
+  res.json(models);
 });
 
 module.exports = router;

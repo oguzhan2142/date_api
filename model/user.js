@@ -27,6 +27,14 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
+    images: {
+      type: [
+        {
+          key: String,
+          date: Date,
+        },
+      ],
+    },
     rejectUsers: {
       type: [mongoose.Types.ObjectId],
     },
@@ -43,4 +51,6 @@ const UserSchema = new Schema(
   { versionKey: false }
 );
 
-module.exports = mongoose.model("User", UserSchema);
+const UserModel = mongoose.model("User", UserSchema);
+
+module.exports = UserModel;

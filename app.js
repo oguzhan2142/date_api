@@ -10,7 +10,8 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 
 const tokenMiddleware = require("./middleware/token_middleware");
-const userRoute = require("./routes/user_route");
+const authRoute = require("./routes/auth_route");
+const photoRoute = require("./routes/photo_route");
 const matchRoute = require("./routes/match_route");
 const chatRoute = require("./routes/chat_route");
 
@@ -19,6 +20,8 @@ const Message = require("./model/message");
 
 require("dotenv").config();
 app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
+
 app.set("json spaces", 40);
 app.use(express.static("public"));
 
@@ -43,7 +46,8 @@ mongoose.set("toJSON", {
     delete converted._id;
   },
 });
-app.use("/api/user", userRoute);
+app.use("/api/auth", authRoute);
+app.use("/api/photo", photoRoute);
 app.use("/api/match", matchRoute);
 app.use("/api/chat", chatRoute);
 app.use(tokenMiddleware.verify);

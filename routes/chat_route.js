@@ -3,12 +3,11 @@ const express = require("express");
 const router = express.Router();
 
 const Room = require("../model/room");
-const Message = require("../model/message");
 
 router.get("/", async (req, res) => {
   const userId = req.query.userId;
 
-  const room = await Room.find(
+  const rooms = await Room.find(
     {
       users: userId,
     },
@@ -21,10 +20,29 @@ router.get("/", async (req, res) => {
     match: { _id: { $ne: userId } },
   });
 
-  if (!room) {
+  if (!rooms) {
     return res.status(404).json({ message: "room doesn't exist" });
   }
-  res.json(room);
+
+  const objects = [];
+  for (let i = 0; i < rooms.length; i++) {
+    const element = rooms[i];
+    const otherUser = element.users[0];
+    const model = {
+      id: element.id,
+      createdAt: element.createdAt,
+      message: element.messages[0] ?? null,
+      contact: {
+        id: otherUser.id,
+        name: `${otherUser.firstName} ${otherUser.lastName}`,
+        username: otherUser.username,
+      },
+    };
+
+    objects.push(model);
+  }
+
+  res.json(objects);
 });
 
 module.exports = router;
