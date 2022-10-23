@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 const http = require("http");
 const path = require("path");
-
+const idUtils = require("./utils/id_utils");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
@@ -54,16 +54,11 @@ app.use(tokenMiddleware.verify);
 
 mongoose.connect(process.env.CONNECTION_STRING);
 
-const generateRoomId = (userId, otherUserId) => {
-  const idList = [userId, otherUserId];
-  idList.sort();
-  return idList.join("-");
-};
-
 io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
   const otherUserId = socket.handshake.query.otherUserId;
-  const roomId = generateRoomId(userId, otherUserId);
+
+  const roomId = idUtils.generateRoomId(userId, otherUserId);
 
   var room = await Room.findOne({
     roomId: roomId,
