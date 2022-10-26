@@ -5,6 +5,7 @@ const router = express.Router();
 const idUtils = require("../utils/id_utils");
 
 const Room = require("../model/room");
+const User = require("../model/user");
 
 router.get("/messages", async (req, res) => {
   try {
@@ -68,6 +69,32 @@ router.get("/", async (req, res) => {
   }
 
   res.json(objects);
+});
+
+router.get("/user/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "user not exist" });
+    }
+
+    const obj = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      mail: user.mail,
+      username: user.username,
+    };
+
+    console.log(obj);
+    res.json(obj);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "unexpected error occurred" });
+  }
 });
 
 module.exports = router;

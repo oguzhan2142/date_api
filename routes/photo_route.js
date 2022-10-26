@@ -44,6 +44,31 @@ router.post("/order", async (req, res) => {
   res.json({ message: "ok" });
 });
 
+router.get("/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const photos = user.images.map((x) => {
+      return {
+        id: x.id,
+        key: x.key,
+        url: imageStorage.getPathOfImageAsUrl(x.key, userId),
+      };
+    });
+
+    res.json(photos);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Unexpected error occurred" });
+  }
+});
+
 router.post("/", upload, async (req, res) => {
   // const userId = req.query.userId;
   // const imageKey = req.query.key;

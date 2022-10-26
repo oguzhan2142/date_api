@@ -1,11 +1,11 @@
 const express = require("express");
 
 const router = express.Router();
-const path = require("path");
+
 const User = require("../model/user");
+const Room = require("../model/room");
 
 const imageStorage = require("../storage/image_storage");
-const strConst = require("../constants/string_const");
 
 router.post("/", async (req, res) => {
   try {
@@ -113,14 +113,36 @@ router.get("/matches", async (req, res) => {
     .select("matches")
     .populate("matches", ["firstName", "lastName", "images"]);
 
-  const matches = user.matches.map((v) => {
-    return {
-      userId: v.id,
-      firstName: v.firstName,
-      lastName: v.lastName,
-      image: imageStorage.getPathOfImageAsUrl(v.images[0]?.key, v.id),
+  const roomsOfUser = await Room.find({ users: userId });
+
+  const matches = [];
+
+  for (let i = 0; i < user.matches.length; i++) {
+    const element = user.matches[i];
+
+    const otherUserId = element.id;
+
+    const room = roomsOfUser.find((x) => x.roomId.includes(otherUserId));
+
+    if (room) {
+      continue;
+    }
+
+    const obj = {
+      userId: element.id,
+      firstName: element.firstName,
+      lastName: element.lastName,
+      image: imageStorage.getPathOfImageAsUrl(
+        element.images[0]?.key,
+        element.id
+      ),
     };
-  });
+
+    matches.push(obj);
+  }
+
+  console.log(matches);
+
   res.json(matches);
 });
 module.exports = router;
