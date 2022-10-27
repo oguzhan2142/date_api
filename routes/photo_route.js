@@ -26,6 +26,23 @@ var storage = multer.diskStorage({
 
 var upload = multer({ storage: storage }).single("image");
 
+router.delete("/:userId/:photoId", async (req, res) => {
+  try {
+    const photoId = req.params.photoId;
+    const userId = req.params.userId;
+
+    await User.updateOne(
+      {
+        _id: userId,
+      },
+      { $pull: { images: { _id: photoId } } }
+    );
+
+    res.json({ message: "Photo deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Unexpected error occurred" });
+  }
+});
 router.get("/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
