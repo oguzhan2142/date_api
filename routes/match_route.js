@@ -93,7 +93,7 @@ router.post("/", async (req, res) => {
         images: v.images.map((k) => {
           return {
             id: k.id,
-            url: imageStorage.getPathOfImage(k.key, v.id),
+            url: imageStorage.getPathOfImageAsUrl(k.key, v.id),
           };
         }),
       };
