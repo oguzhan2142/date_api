@@ -16,33 +16,15 @@ var storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const imageKey = req.query.key;
-    console.log(imageKey);
+
+    console.log(req.body.qq);
+
     const fileName = `${imageKey}.png`;
     cb(null, fileName);
   },
 });
 
 var upload = multer({ storage: storage }).single("image");
-
-router.post("/order", async (req, res) => {
-  const images = req.body.images;
-  const userId = req.body.userId;
-  const existImages = [];
-  for (let i = 0; i < images.length; i++) {
-    const element = images[i];
-    const dirPath = imageStorage.getPathOfImage(element.key, userId);
-
-    if (fs.existsSync(dirPath)) {
-      existImages.push(element);
-    }
-  }
-
-  console.log(existImages);
-
-  await User.updateOne({ _id: userId }, { images: existImages });
-
-  res.json({ message: "ok" });
-});
 
 router.get("/:userId", async (req, res) => {
   try {
@@ -68,13 +50,63 @@ router.get("/:userId", async (req, res) => {
     res.status(500).json({ message: "Unexpected error occurred" });
   }
 });
+router.put("/", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const imageKey = req.query.key;
+    const index = parseInt(req.query.index);
 
+    const user = await User.findById(userId);
+
+    const images = user.images;
+
+    const imageIndex = images.findIndex((x) => x.key == imageKey);
+
+    if (imageIndex == undefined) {
+      return res.status(404).json({ message: "image key not found" });
+    }
+    const image = images[imageIndex];
+
+    images.splice(imageIndex, 1);
+
+    images.splice(index, 0, image);
+
+    await user.updateOne({
+      $set: {
+        images: images,
+      },
+    });
+    res.json({ message: "ok" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Unexpected error occurred" });
+  }
+});
 router.post("/", upload, async (req, res) => {
-  // const userId = req.query.userId;
-  // const imageKey = req.query.key;
+  const userId = req.query.userId;
+  const key = req.query.key;
+  let user = await User.findById(userId);
+
+  if (user.images.length == 9) {
+    return res.status(400).json({ message: "Images cant be more than 9" });
+  }
+
+  await user.updateOne({
+    $push: {
+      images: { key: key },
+    },
+  });
+
+  user = await User.findById(userId);
+
+  const insertedImage = user.images.find((x) => x.key == key);
 
   if (req.file) {
-    res.json({ message: "ok" });
+    res.json({
+      id: insertedImage.id,
+      key: insertedImage.key,
+      url: imageStorage.getPathOfImageAsUrl(insertedImage.key, userId),
+    });
   } else {
     res.status(400).json({ message: "not uploaded" });
   }
