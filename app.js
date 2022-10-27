@@ -14,6 +14,7 @@ const authRoute = require("./routes/auth_route");
 const photoRoute = require("./routes/photo_route");
 const matchRoute = require("./routes/match_route");
 const chatRoute = require("./routes/chat_route");
+const locationRoute = require("./routes/location_route");
 
 const Room = require("./model/room");
 const Message = require("./model/message");
@@ -50,6 +51,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/photo", photoRoute);
 app.use("/api/match", matchRoute);
 app.use("/api/chat", chatRoute);
+app.use("/api/location", locationRoute);
 app.use(tokenMiddleware.verify);
 
 mongoose.connect(process.env.CONNECTION_STRING);

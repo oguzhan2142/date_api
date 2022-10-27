@@ -4,6 +4,7 @@ const router = express.Router();
 
 const User = require("../model/user");
 const Room = require("../model/room");
+const haversine = require("haversine-distance");
 
 const imageStorage = require("../storage/image_storage");
 
@@ -83,13 +84,27 @@ router.post("/", async (req, res) => {
     var now = new Date();
     var diff = now - candidates.birthday;
 
+    const locationOfUser = [user.location.latitude, user.location.longitude];
+
     const models = candidates.map((v) => {
+      const otherLoc = [v.location.latitude, v.location.longitude];
+      const distInKm = haversine(locationOfUser, otherLoc) / 1000;
+
+      let distance = null;
+
+      if (distInKm < 1) {
+        distance = Math.round(distInKm * 10) / 10;
+      } else {
+        distance = Math.round(distInKm);
+      }
+      console.log(distance);
       return {
         id: v.id,
         username: v.username,
         firstName: v.firstName,
         lastName: v.lastName,
         age: 20,
+        distance: distance,
         images: v.images.map((k) => {
           return {
             id: k.id,

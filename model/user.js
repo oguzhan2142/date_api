@@ -35,6 +35,12 @@ const UserSchema = new Schema(
         },
       ],
     },
+    location: {
+      type: {
+        latitude: Number,
+        longitude: Number,
+      },
+    },
     rejectUsers: {
       type: [mongoose.Types.ObjectId],
       ref: "User",
