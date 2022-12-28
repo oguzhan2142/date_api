@@ -3,7 +3,8 @@ const jwt = require("jsonwebtoken");
 const duration = "1w";
 
 const verify = (req, res, next) => {
-  if (req.url == "/user/login/" || req.url == "/user/register/") {
+  console.log(req.url);
+  if (req.url == "/api/auth/login" || req.url == "/api/auth/signup") {
     return next();
   }
 

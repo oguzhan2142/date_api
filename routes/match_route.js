@@ -8,57 +8,78 @@ const haversine = require("haversine-distance");
 
 const imageStorage = require("../storage/image_storage");
 
+// dislike
+const leftDir = "left";
+// like
+const rightDir = "right";
+
 router.post("/", async (req, res) => {
   try {
     const userId = req.body.userId;
+    const swipeDirection = req.body.swipeDirection;
     const targetUserId = req.body.targetUserId;
-    const isAccepted = req.body.isAccepted;
-    const count = req.body.count;
+
+    const targetUser = await User.findById({ _id: targetUserId });
+    const user = await User.findById({ _id: userId });
+    console.log(targetUser.firstName);
+
+    const matchesList = user.matches;
+    const acceptedList = user.acceptedUsers ?? [];
+    if (acceptedList.includes(targetUserId)) {
+      return res.status(400).json({ message: "Already accepted" });
+    }
+
+    if (swipeDirection === leftDir) {
+      const rejectedUserList = user.rejectUsers;
+      if (rejectedUserList.includes(targetUserId)) {
+        return res.status(400).json({ message: "Already rejected" });
+      }
+
+      rejectedUserList.push(targetUserId);
+      await User.updateOne({ _id: userId }, { rejectUsers: rejectedUserList });
+    } else if (swipeDirection === rightDir) {
+      const acceptedList = user.acceptedUsers;
+
+      if (acceptedList.includes(targetUserId)) {
+        return res.status(400).json({ message: "Already accepted" });
+      }
+
+      if (targetUser.acceptedUsers.includes(user.id)) {
+        const targetMatches = targetUser.matches;
+        targetMatches.push(user.id);
+
+        await User.updateOne(
+          { _id: targetUser.id },
+          { matches: targetMatches }
+        );
+        matchesList.push(targetUser.id);
+      }
+      acceptedList.push(targetUserId);
+      await User.updateOne(
+        { _id: userId },
+
+        { acceptedUsers: acceptedList, matches: matchesList }
+      );
+    } else {
+      return res.status(400).json({ message: "invalid direction" });
+    }
+    res.json({ message: "ok" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "unexpected error occurred" });
+  }
+});
+
+router.get("/", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+
+    const count = req.query.count;
 
     const user = await User.findById({ _id: userId });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-    let modifiedUser;
-    if (isAccepted != undefined && targetUserId != undefined) {
-      const targetUser = await User.findById({ _id: targetUserId });
-      if (isAccepted) {
-        const acceptedList = user.acceptedUsers;
-        const matchesList = user.matches;
-        if (acceptedList.includes(targetUserId)) {
-          return res.status(400).json({ message: "Already accepted" });
-        }
-
-        if (targetUser.acceptedUsers.includes(user.id)) {
-          const targetMatches = targetUser.matches;
-          targetMatches.push(user.id);
-
-          await User.updateOne(
-            { _id: targetUser.id },
-            { matches: targetMatches }
-          );
-          matchesList.push(targetUser.id);
-        }
-        acceptedList.push(targetUserId);
-
-        modifiedUser = await User.updateOne(
-          { _id: userId },
-
-          { acceptedUsers: acceptedList, matches: matchesList }
-        );
-      } else {
-        const list = user.rejectUsers;
-        if (list.includes(targetUserId)) {
-          return res.status(400).json({ message: "Already rejected" });
-        }
-
-        list.push(targetUserId);
-        modifiedUser = await User.updateOne(
-          { _id: userId },
-          { rejectUsers: list }
-        );
-      }
     }
 
     let excludeIdList = [userId];
@@ -87,7 +108,7 @@ router.post("/", async (req, res) => {
     const locationOfUser = [user.location.latitude, user.location.longitude];
 
     const models = candidates.map((v) => {
-      const otherLoc = [v.location.latitude, v.location.longitude];
+      const otherLoc = [v?.location?.latitude, v?.location?.longitude];
       const distInKm = haversine(locationOfUser, otherLoc) / 1000;
 
       let distance = null;
@@ -97,7 +118,7 @@ router.post("/", async (req, res) => {
       } else {
         distance = Math.round(distInKm);
       }
-      console.log(distance);
+
       return {
         id: v.id,
         username: v.username,
@@ -155,8 +176,6 @@ router.get("/matches", async (req, res) => {
 
     matches.push(obj);
   }
-
-  console.log(matches);
 
   res.json(matches);
 });

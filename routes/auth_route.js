@@ -6,7 +6,7 @@ const User = require("../model/user");
 
 const expireIn = "2h";
 
-router.post("/register", async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const username = req.body.username;
     const password = req.body.password;
